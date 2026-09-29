@@ -1,51 +1,62 @@
+import { CartPage } from '../../pages/Cartpage';
+import { CheckoutPage } from '../../pages/CheckoutPage';
+import { InventoryPage } from '../../pages/InventoryPage';
+
 import { test, expect } from '../fixtures';
 
 test.describe('cart checkout', () => {
-  
-  test('add item to cart and check badge', async ({ loggedInPage }) => {
-    await loggedInPage.getByTestId('add-to-cart-sauce-labs-backpack').click();
-    await expect(loggedInPage.getByTestId('shopping-cart-badge')).toHaveText('1');
+ 
+  let inventoryPage: InventoryPage;
+  let cartPage: CartPage;
+  let checkoutPage: CheckoutPage;
+   test.beforeEach(async ({ loggedInPage }) => {
+    inventoryPage = new InventoryPage(loggedInPage);
+    cartPage = new CartPage(loggedInPage);
+    checkoutPage = new CheckoutPage(loggedInPage);
   });
 
-  test('add multiple items to cart and check badge', async ({ loggedInPage }) => {
-    await loggedInPage.getByTestId('add-to-cart-sauce-labs-backpack').click();
-    await loggedInPage.getByTestId('add-to-cart-sauce-labs-bolt-t-shirt').click();
-    await expect(loggedInPage.getByTestId('shopping-cart-badge')).toHaveText('2');
+  test('add item to cart and check badge', async () => {
+    await inventoryPage.addToCart('sauce-labs-backpack');
+    await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
+  });
+
+  test('add multiple items to cart and check badge', async () => {
+    await inventoryPage.addToCart('sauce-labs-backpack');
+    await inventoryPage.addToCart('sauce-labs-bolt-t-shirt');
+    await expect(inventoryPage.shoppingCartBadge).toHaveText('2');
   });
 
 
-  test('remove item from cart and check badge', async ({ loggedInPage }) => {
-    await loggedInPage.getByTestId('add-to-cart-sauce-labs-backpack').click();
-    await expect(loggedInPage.getByTestId('shopping-cart-badge')).toHaveText('1');
+  test('remove item from cart and check badge', async () => {
+    await inventoryPage.addToCart('sauce-labs-backpack');
+    await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
 
-    await loggedInPage.getByTestId('remove-sauce-labs-backpack').click();
-    await expect(loggedInPage.getByTestId('shopping-cart-badge')).toBeHidden();
+    await inventoryPage.removeFromCart('sauce-labs-backpack');
+    await expect(inventoryPage.shoppingCartBadge).toBeHidden();
   });
 
   test('checkout happy path', async ({ loggedInPage }) => {
-    await loggedInPage.getByTestId('add-to-cart-sauce-labs-backpack').click();
-    await expect(loggedInPage.getByTestId('shopping-cart-badge')).toHaveText('1');
+    await inventoryPage.addToCart('sauce-labs-backpack');
+    await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
 
-    await loggedInPage.getByTestId('shopping-cart-link').click();
+    await inventoryPage.openCart();
     await expect(loggedInPage).toHaveURL(/cart/);
-    await expect(loggedInPage.getByTestId('title')).toHaveText('Your Cart');
+    await expect(cartPage.title).toHaveText('Your Cart');
 
-    await loggedInPage.getByTestId('checkout').click();
+    await cartPage.checkout();
     await expect(loggedInPage).toHaveURL(/checkout-step-one/);
-    await expect(loggedInPage.getByTestId('title')).toHaveText('Checkout: Your Information');
+    await expect(checkoutPage.title).toHaveText('Checkout: Your Information');
 
-    await loggedInPage.getByTestId('firstName').fill('John');
-    await loggedInPage.getByTestId('lastName').fill('Doe');
-    await loggedInPage.getByTestId('postalCode').fill('12345');
-    await loggedInPage.getByTestId('continue').click();
+    await checkoutPage.fillInfo('John', 'Doe', '12345');
+    await checkoutPage.continue();
 
     await expect(loggedInPage).toHaveURL(/checkout-step-two/);
-    await expect(loggedInPage.getByTestId('title')).toHaveText('Checkout: Overview');
+    await expect(checkoutPage.title).toHaveText('Checkout: Overview');
 
-    await loggedInPage.getByTestId('finish').click();
+    await checkoutPage.finish();
     await expect(loggedInPage).toHaveURL(/checkout-complete/);
-    await expect(loggedInPage.getByTestId('title')).toHaveText('Checkout: Complete!');
-    await expect(loggedInPage.getByTestId('complete-header')).toHaveText('Thank you for your order!');
+    await expect(checkoutPage.title).toHaveText('Checkout: Complete!');
+    await expect(checkoutPage.completeHeader).toHaveText('Thank you for your order!');
 
   })
 });

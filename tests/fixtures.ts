@@ -1,4 +1,5 @@
 import { test as base, expect, Page } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
 
 type MyFixtures = {
   loggedInPage: Page;
@@ -6,10 +7,9 @@ type MyFixtures = {
 
 export const test = base.extend<MyFixtures>({
   loggedInPage: async ({ page }, use) => {
-    await page.goto('/');
-    await page.getByTestId('username').fill('standard_user');
-    await page.getByTestId('password').fill('secret_sauce');
-    await page.getByTestId('login-button').click();
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+    await loginPage.login('standard_user', 'secret_sauce');
     await expect(page).toHaveURL(/inventory/);
 
     await use(page);

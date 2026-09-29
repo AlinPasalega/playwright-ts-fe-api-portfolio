@@ -1,32 +1,32 @@
 import { test, expect } from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage';
 
 test.describe('Login', () => {
+  let loginPage: LoginPage;
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    loginPage = new LoginPage(page);
+    await loginPage.goto();
   });
 
   test('standard user can log in', async ({ page }) => {
-    await page.getByTestId('username').fill('standard_user');
-    await page.getByTestId('password').fill('secret_sauce');
-    await page.getByTestId('login-button').click();
+
+    await loginPage.login('standard_user', 'secret_sauce');
 
     await expect(page).toHaveURL(/inventory/);
     await expect(page.getByTestId('title')).toHaveText('Products');
   });
 
-  test('locked out user sees an error', async ({ page }) => {
-    await page.getByTestId('username').fill('locked_out_user');
-    await page.getByTestId('password').fill('secret_sauce');
-    await page.getByTestId('login-button').click();
+  test('locked out user sees an error', async () => {
 
-    await expect(page.getByTestId('error')).toContainText('locked out');
+    await loginPage.login('locked_out_user', 'secret_sauce');
+
+    await expect(loginPage.error).toContainText('locked out');
   });
 
-  test('login with wrong credentials', async ({ page }) => {
-    await page.getByTestId('username').fill('standard_user');
-    await page.getByTestId('password').fill('wrong_password');
-    await page.getByTestId('login-button').click();
+  test('login with wrong credentials', async () => {
 
-    await expect(page.getByTestId('error')).toContainText('do not match');
+    await loginPage.login('standard_user', 'wrong_password');
+
+    await expect(loginPage.error).toContainText('do not match');
   });
 });
