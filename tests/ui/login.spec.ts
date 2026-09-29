@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../pages/LoginPage';
 
 test.describe('Login', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
   let loginPage: LoginPage;
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
