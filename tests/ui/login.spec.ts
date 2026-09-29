@@ -21,4 +21,12 @@ test.describe('Login', () => {
 
     await expect(page.getByTestId('error')).toContainText('locked out');
   });
+
+  test('login with wrong credentials', async ({ page }) => {
+    await page.getByTestId('username').fill('standard_user');
+    await page.getByTestId('password').fill('wrong_password');
+    await page.getByTestId('login-button').click();
+
+    await expect(page.getByTestId('error')).toContainText('do not match');
+  });
 });
