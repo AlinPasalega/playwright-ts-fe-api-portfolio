@@ -1,4 +1,4 @@
-import { CartPage } from '../../pages/Cartpage';
+import { CartPage } from '../../pages/CartPage';
 import { CheckoutPage } from '../../pages/CheckoutPage';
 import { InventoryPage } from '../../pages/InventoryPage';
 
