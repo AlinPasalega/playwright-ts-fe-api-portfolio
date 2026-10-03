@@ -9,7 +9,7 @@ test.describe('Login', () => {
     await loginPage.goto();
   });
 
-  test('standard user can log in', async ({ page }) => {
+  test('standard user can log in',{tag: '@smoke'}, async ({ page }) => {
 
     await loginPage.login('standard_user', 'secret_sauce');
 
@@ -17,14 +17,14 @@ test.describe('Login', () => {
     await expect(page.getByTestId('title')).toHaveText('Products');
   });
 
-  test('locked out user sees an error', async () => {
+  test('locked out user sees an error',{tag: '@regression'}, async () => {
 
     await loginPage.login('locked_out_user', 'secret_sauce');
 
     await expect(loginPage.error).toContainText('locked out');
   });
 
-  test('login with wrong credentials', async () => {
+  test('login with wrong credentials',{tag: '@regression'}, async () => {
 
     await loginPage.login('standard_user', 'wrong_password');
 

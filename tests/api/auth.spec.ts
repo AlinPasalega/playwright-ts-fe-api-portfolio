@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('API Authentication', () => {
   
-    test('returns token for valid credentials', async ({ request }) => {
+    test('returns token for valid credentials',{tag: '@smoke'}, async ({ request }) => {
       const response = await request.post('/auth', {
         data: {
           username: 'admin',
@@ -17,7 +17,7 @@ test.describe('API Authentication', () => {
     });
 
 
-    test('no token available for invalid credentials', async ({ request }) => {
+    test('no token available for invalid credentials',{tag: '@regression'}, async ({ request }) => {
       const response = await request.post('/auth', {
         data: {
           username: 'admin',

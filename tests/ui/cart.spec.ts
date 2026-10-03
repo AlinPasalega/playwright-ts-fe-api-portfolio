@@ -15,19 +15,19 @@ test.describe('cart checkout', () => {
     checkoutPage = new CheckoutPage(loggedInPage);
   });
 
-  test('add item to cart and check badge', async () => {
+  test('add item to cart and check badge',{tag: '@smoke'}, async () => {
     await inventoryPage.addToCart('sauce-labs-backpack');
     await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
   });
 
-  test('add multiple items to cart and check badge', async () => {
+  test('add multiple items to cart and check badge',{tag: '@smoke'}, async () => {
     await inventoryPage.addToCart('sauce-labs-backpack');
     await inventoryPage.addToCart('sauce-labs-bolt-t-shirt');
     await expect(inventoryPage.shoppingCartBadge).toHaveText('2');
   });
 
 
-  test('remove item from cart and check badge', async () => {
+  test('remove item from cart and check badge',{tag: '@regression'}, async () => {
     await inventoryPage.addToCart('sauce-labs-backpack');
     await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
 
@@ -35,7 +35,7 @@ test.describe('cart checkout', () => {
     await expect(inventoryPage.shoppingCartBadge).toBeHidden();
   });
 
-  test('checkout happy path', async ({ loggedInPage }) => {
+  test('checkout happy path',{tag: '@smoke'}, async ({ loggedInPage }) => {
     await inventoryPage.addToCart('sauce-labs-backpack');
     await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
 
