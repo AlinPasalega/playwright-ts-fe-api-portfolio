@@ -34,23 +34,31 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
  projects: [
-  { name: 'setup', testMatch: /.*\.setup\.ts/ },
-  {
-    name: 'chromium',
-    use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user.json' },
-    dependencies: ['setup'],
-  },
-  {
-    name: 'firefox',
-    use: { ...devices['Desktop Firefox'], storageState: 'playwright/.auth/user.json' },
-    dependencies: ['setup'],
-  },
-  {
-    name: 'webkit',
-    use: { ...devices['Desktop Safari'], storageState: 'playwright/.auth/user.json' },
-    dependencies: ['setup'],
-  },
-]
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    {
+      name: 'chromium',
+      testIgnore: /api\/.*/,
+      use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      testIgnore: /api\/.*/,
+      use: { ...devices['Desktop Firefox'], storageState: 'playwright/.auth/user.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      testIgnore: /api\/.*/,
+      use: { ...devices['Desktop Safari'], storageState: 'playwright/.auth/user.json' },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'api',
+      testMatch: /api\/.*\.spec\.ts/,
+      use: { baseURL: 'https://restful-booker.herokuapp.com' },
+    },
+  ],
 
   /* Run your local dev server before starting the tests */
   // webServer: {
