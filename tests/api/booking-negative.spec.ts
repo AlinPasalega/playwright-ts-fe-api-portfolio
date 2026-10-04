@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { BookingClient } from '../../api/BookingClient';
 
 test.describe('API Booking Negative Tests', () => {
+    let client: BookingClient
     let bookingId: number;
     const bookingData = {
         firstname: 'Johny',
@@ -11,29 +13,27 @@ test.describe('API Booking Negative Tests', () => {
         additionalneeds: 'Breakfast',
     };
     test.beforeEach(async ({ request }) => {
-        const response = await request.post('/booking', { data: bookingData });
+        client = new BookingClient(request);
+        const response = await client.createBooking(bookingData);
         expect(response.status()).toBe(200);
         bookingId = (await response.json()).bookingid;
+
     });
 
 
-    test('Update booking without token', { tag: '@regression' }, async ({ request }) => {
-
-        const response = await request.put(`/booking/${bookingId}`, {
-            data: { ...bookingData, firstname: 'Jane', totalprice: 200, additionalneeds: 'Lunch' },
-        });
+    test('Update booking without token', { tag: '@regression' }, async ({ }) => {
+        const response = await client.updateBooking(bookingId, { ...bookingData, firstname: 'Jane', totalprice: 200, additionalneeds: 'Lunch' });
         expect(response.status()).toBe(403);
     })
 
-    test('Delete booking without token', async ({ request }) => {
-
-        const response = await request.delete(`/booking/${bookingId}`);
+    test('Delete booking without token', { tag: '@regression' }, async () => {
+        const response = await client.deleteBooking(bookingId);
         expect(response.status()).toBe(403);
 
     })
-    test('Get booking with invalid ID', async ({ request }) => {
+    test('Get booking with invalid ID', { tag: '@regression' }, async ({ }) => {
 
-        const response = await request.get(`/booking/999999`);
+        const response = await client.getBooking(999999);
         expect(response.status()).toBe(404);
 
     })

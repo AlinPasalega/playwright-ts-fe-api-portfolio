@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { BookingClient } from '../../api/BookingClient';
 
 test.describe('API Booking', () => {
+
     const bookingData = {
         firstname: 'John',
         lastname: 'Doe',
@@ -10,20 +12,18 @@ test.describe('API Booking', () => {
         additionalneeds: 'Breakfast',
     };
 
-    test('full booking lifecycle',{tag: '@smoke'}, async ({ request }) => {
+    test('full booking lifecycle', { tag: '@smoke' }, async ({ request }) => {
+        const client = new BookingClient(request);
         let token: string;
         let bookingId: number;
 
         await test.step('Authenticate', async () => {
-            const response = await request.post('/auth', {
-                data: { username: 'admin', password: 'password123' },
-            });
-            expect(response.status()).toBe(200);
-            token = (await response.json()).token;
+            token = await client.getToken();
+            expect(token).toBeTruthy();
         });
 
         await test.step('Create booking', async () => {
-            const response = await request.post('/booking', { data: bookingData });
+            const response = await client.createBooking(bookingData);
             expect(response.status()).toBe(200);
             const body = await response.json();
             bookingId = body.bookingid;
@@ -31,29 +31,24 @@ test.describe('API Booking', () => {
         });
 
         await test.step('Get booking', async () => {
-            const response = await request.get(`/booking/${bookingId}`);
+            const response = await client.getBooking(bookingId);
             expect(response.status()).toBe(200);
             expect((await response.json()).firstname).toBe('John');
         });
 
         await test.step('Update booking', async () => {
-            const response = await request.put(`/booking/${bookingId}`, {
-                headers: { Cookie: `token=${token}` },
-                data: { ...bookingData, firstname: 'Jane', totalprice: 200, additionalneeds: 'Lunch' },
-            });
+            const response = await client.updateBooking(bookingId, { ...bookingData, firstname: 'Jane', totalprice: 200, additionalneeds: 'Lunch' }, token);
             expect(response.status()).toBe(200);
             expect((await response.json()).firstname).toBe('Jane');
         });
 
         await test.step('Delete booking', async () => {
-            const response = await request.delete(`/booking/${bookingId}`, {
-                headers: { Cookie: `token=${token}` },
-            });
+            const response = await client.deleteBooking(bookingId, token);
             expect(response.status()).toBe(201);
         });
 
         await test.step('Confirm booking deletion', async () => {
-            const response = await request.get(`/booking/${bookingId}`);
+            const response = await client.getBooking(bookingId);
             expect(response.status()).toBe(404);
         });
     });
