@@ -4,6 +4,16 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  schedule:
+    - cron: '0 3 * * *'   # 06:00 Bucharest (GitHub cron uses UTC)
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Which suite to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options: [smoke, regression, all]
 jobs:
   test:
     timeout-minutes: 60
@@ -18,7 +28,19 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          SUITE="${{ inputs.suite }}"
+        elif [ "${{ github.event_name }}" = "schedule" ]; then
+          SUITE="all"
+        else
+          SUITE="smoke"
+        fi
+        if [ "$SUITE" = "all" ]; then
+          npx playwright test
+        else
+          npx playwright test --grep "@$SUITE"
+        fi
       env:
         SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
         SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
