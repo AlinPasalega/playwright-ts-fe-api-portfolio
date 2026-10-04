@@ -29,7 +29,9 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
     baseURL: 'https://www.saucedemo.com',
     testIdAttribute: 'data-test',
-    trace: 'on-first-retry'
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
