@@ -1,23 +1,17 @@
 import { test, expect } from '@playwright/test';
 import { BookingClient } from '../../api/BookingClient';
 import { BookingSchema, CreateBookingResponseSchema } from '../../api/schemas';
+import { createBookingData } from '../../api/testData';
 
 test.describe('API Booking', () => {
 
-    const bookingData = {
-        firstname: 'John',
-        lastname: 'Doe',
-        totalprice: 150,
-        depositpaid: true,
-        bookingdates: { checkin: '2024-01-01', checkout: '2024-01-10' },
-        additionalneeds: 'Breakfast',
-    };
+    
 
     test('full booking lifecycle', { tag: '@smoke' }, async ({ request }) => {
         const client = new BookingClient(request);
         let token: string;
         let bookingId: number;
-
+        const bookingData = createBookingData();
         await test.step('Authenticate', async () => {
             token = await client.getToken();
             expect(token).toBeTruthy();
@@ -36,7 +30,7 @@ test.describe('API Booking', () => {
             const response = await client.getBooking(bookingId);
             expect(response.status()).toBe(200);
             const body = await response.json();
-            expect(body.firstname).toBe('John');
+            expect(body.firstname).toBe(bookingData.firstname);
             expect(() => BookingSchema.parse(body)).not.toThrow();
             
         });
