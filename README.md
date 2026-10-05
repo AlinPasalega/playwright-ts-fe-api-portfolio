@@ -21,21 +21,25 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 ## What's covered
 
 **UI: Login**
+
 - Standard user logs in and lands on Products
 - Locked-out user sees an error
 - Wrong password shows a validation error
 
 **UI: Cart & checkout**
+
 - Add one item and check the cart badge
 - Add multiple items and check the badge count
 - Remove an item and check the badge disappears
 - Full checkout happy path to the order confirmation page
 
 **API: Authentication**
+
 - Valid credentials return a token
 - Invalid credentials return no token and a "Bad credentials" reason
 
 **API: Bookings**
+
 - Full lifecycle in one test with `test.step`: authenticate, create, read, update, delete, confirm deletion (404)
 - Negative cases: update and delete without a token return 403, a booking that doesn't exist returns 404
 
