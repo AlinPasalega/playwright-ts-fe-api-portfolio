@@ -5,12 +5,18 @@ export class InventoryPage {
   readonly title: Locator;
   readonly shoppingCartBadge: Locator;
   readonly shoppingCartLink: Locator;
+  readonly sortContainer: Locator;
+  readonly burgerMenuButton: Locator;
+  readonly logoutButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.title = page.getByTestId('title');
     this.shoppingCartBadge = page.getByTestId('shopping-cart-badge');
     this.shoppingCartLink = page.getByTestId('shopping-cart-link');
+    this.sortContainer = page.getByTestId('product-sort-container');
+    this.burgerMenuButton = page.locator('#react-burger-menu-btn');
+    this.logoutButton = page.locator('#logout_sidebar_link');
   }
 
   async addToCart(item: string) {
@@ -23,5 +29,17 @@ export class InventoryPage {
 
   async openCart() {
     await this.shoppingCartLink.click();
+  }
+
+  async sortProducts(sortOption: string) {
+    await this.sortContainer.selectOption(sortOption);
+  }
+  async getProductNames() {
+    return this.page.locator('.inventory_item_name').allTextContents();
+  }
+
+  async openBurgerMenuLogout() {
+    await this.burgerMenuButton.click();
+    await this.logoutButton.click();
   }
 }
