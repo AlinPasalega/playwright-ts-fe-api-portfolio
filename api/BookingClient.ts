@@ -32,4 +32,10 @@ export class BookingClient {
       headers: token ? { Cookie: `token=${token}` } : {},
     });
   }
+  async partialUpdateBooking(id: number, data: object, token?: string) {
+    return this.request.patch(`/booking/${id}`, {
+      headers: token ? { Cookie: `token=${token}` } : {},
+      data,
+    });
+  }
 }

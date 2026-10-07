@@ -54,4 +54,33 @@ test.describe('API Booking', () => {
       expect(response.status()).toBe(404);
     });
   });
+
+  test('partially updates a booking', { tag: '@regression' }, async ({ request }) => {
+    const client = new BookingClient(request);
+    const bookingData = createBookingData();
+    const token = await client.getToken();
+
+    const createResponse = await client.createBooking(bookingData);
+    expect(createResponse.status()).toBe(200);
+    const { bookingid } = await createResponse.json();
+
+    await test.step('Patch firstname and totalprice', async () => {
+      const response = await client.partialUpdateBooking(
+        bookingid,
+        { firstname: 'Patched', totalprice: 999 },
+        token,
+      );
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(() => BookingSchema.parse(body)).not.toThrow();
+      expect(body.firstname).toBe('Patched');
+      expect(body.totalprice).toBe(999);
+      expect(body.lastname).toBe(bookingData.lastname);
+    });
+
+    await test.step('Clean up', async () => {
+      const response = await client.deleteBooking(bookingid, token);
+      expect(response.status()).toBe(201);
+    });
+  });
 });
