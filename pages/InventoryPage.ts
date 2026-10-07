@@ -42,4 +42,20 @@ export class InventoryPage {
     await this.burgerMenuButton.click();
     await this.logoutButton.click();
   }
+
+  async getProductPrices() {
+    const priceTexts = await this.page.locator('.inventory_item_price').allTextContents();
+    return priceTexts.map((text) => parseFloat(text.replace('$', '')));
+  }
+
+  async addToCartByName(name: string) {
+    await this.page
+      .getByTestId('inventory-item')
+      .filter({ hasText: name })
+      .getByRole('button', { name: /add to cart|remove/i })
+      .click();
+  }
+  getCartBadge() {
+    return this.shoppingCartBadge;
+  }
 }
