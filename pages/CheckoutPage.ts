@@ -34,4 +34,8 @@ export class CheckoutPage {
   async finish() {
     await this.finishButton.click();
   }
+
+  getErrorMessage() {
+    return this.page.getByTestId('error');
+  }
 }
