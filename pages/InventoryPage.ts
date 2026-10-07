@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class InventoryPage {
   readonly page: Page;
@@ -40,6 +40,7 @@ export class InventoryPage {
 
   async openBurgerMenuLogout() {
     await this.burgerMenuButton.click();
+    await expect(this.page.locator('.bm-menu-wrap')).toHaveAttribute('aria-hidden', 'false');
     await this.logoutButton.click();
   }
 
@@ -57,5 +58,15 @@ export class InventoryPage {
   }
   getCartBadge() {
     return this.shoppingCartBadge;
+  }
+
+  async getFirstProduct() {
+    const name = await this.page.locator('.inventory_item_name').first().textContent();
+    const price = await this.page.locator('.inventory_item_price').first().textContent();
+    return { name, price };
+  }
+
+  async openProductByName(name: string) {
+    await this.page.locator('.inventory_item_name', { hasText: name }).click();
   }
 }

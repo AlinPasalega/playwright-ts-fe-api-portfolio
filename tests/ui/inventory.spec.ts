@@ -30,6 +30,19 @@ test.describe('Inventory Page', () => {
   }
 
   test(
+    'product detail page shows the same name and price',
+    { tag: '@regression' },
+    async ({ loggedInPage }) => {
+      const inventory = new InventoryPage(loggedInPage);
+      const { name, price } = await inventory.getFirstProduct();
+      await inventory.openProductByName(name!);
+      await expect(loggedInPage).toHaveURL(/inventory-item\.html/);
+      await expect(loggedInPage.locator('.inventory_details_name')).toHaveText(name!);
+      await expect(loggedInPage.locator('.inventory_details_price')).toHaveText(price!);
+    },
+  );
+
+  test(
     'cart badge updates when adding and removing products',
     { tag: '@regression' },
     async ({ loggedInPage }) => {
