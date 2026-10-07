@@ -25,6 +25,9 @@ export class BookingClient {
       data,
     });
   }
+  async getBookingIds(params?: Record<string, string>) {
+    return this.request.get('/booking', { params });
+  }
 
   async deleteBooking(id: number, token?: string) {
     // DELETE with the Cookie header only if a token is given

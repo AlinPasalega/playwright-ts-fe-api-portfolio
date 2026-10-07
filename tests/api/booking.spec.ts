@@ -83,4 +83,29 @@ test.describe('API Booking', () => {
       expect(response.status()).toBe(201);
     });
   });
+
+  test('Filter by firstname and lastname', { tag: '@regression' }, async ({ request }) => {
+    const client = new BookingClient(request);
+    const bookingData = createBookingData();
+    const token = await client.getToken();
+
+    const createResponse = await client.createBooking(bookingData);
+    expect(createResponse.status()).toBe(200);
+    const { bookingid } = await createResponse.json();
+
+    await test.step('Filter by firstname', async () => {
+      const response = await client.getBookingIds({
+        firstname: bookingData.firstname,
+        lastname: bookingData.lastname,
+      });
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body).toEqual(expect.arrayContaining([expect.objectContaining({ bookingid })]));
+    });
+
+    await test.step('Clean up', async () => {
+      const response = await client.deleteBooking(bookingid, token);
+      expect(response.status()).toBe(201);
+    });
+  });
 });
