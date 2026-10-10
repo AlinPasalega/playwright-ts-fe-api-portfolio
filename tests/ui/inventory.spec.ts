@@ -62,4 +62,19 @@ test.describe('Inventory Page', () => {
     await expect(loggedInPage).toHaveURL('https://www.saucedemo.com/');
     await expect(loggedInPage.getByTestId('login-button')).toBeVisible();
   });
+
+  test(
+    'inventory still works when product images fail to load',
+    { tag: '@regression' },
+    async ({ loggedInPage }) => {
+      await loggedInPage.route('**/*.jpg', (route) => route.abort());
+      await loggedInPage.reload();
+      const inventory = new InventoryPage(loggedInPage);
+      await expect(loggedInPage.locator('.inventory_item_name')).toHaveCount(6);
+      const img = loggedInPage.locator('.inventory_item_img img').first();
+      expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(0);
+      await inventory.addToCart('sauce-labs-backpack');
+      await expect(inventory.getCartBadge()).toHaveText('1');
+    },
+  );
 });
