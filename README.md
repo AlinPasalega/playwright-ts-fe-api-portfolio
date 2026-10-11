@@ -166,7 +166,7 @@ After every run an Allure report (with history across runs) is deployed to [GitH
 - [x] Generated test data with Faker
 - [x] Data-driven UI tests
 - [x] ESLint + Prettier + Husky pre-commit checks
-- [ ] Sharding and merged reports
+- [x] Sharding and merged reports
 - [x] Allure reporting with run history
 - [x] Network mocking (blocked images)
 - [x] Job summary on GitHub Actions
