@@ -61,6 +61,7 @@ jobs:
         uses: daun/playwright-report-summary@v3
         with:
           report-file: results.json
+          job-summary: true
   deploy-report:
     needs: test
     if: always()
