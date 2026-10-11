@@ -18,6 +18,11 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2]
+        shardTotal: [2]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,45 +41,81 @@ jobs:
           else
             SUITE="smoke"
           fi
+          SHARD="--shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}"
           if [ "$SUITE" = "all" ]; then
-            npx playwright test
+            npx playwright test $SHARD
           else
-            npx playwright test --grep "@$SUITE"
+            npx playwright test --grep "@$SUITE" $SHARD
           fi
         env:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
-      - name: Restore Allure history
+      - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report/
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: allure-results-${{ matrix.shardIndex }}
+          path: allure-results/
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.shardIndex }}
+          path: test-results/
+          retention-days: 30
+
+  merge-reports:
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Download blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - name: Download Allure results
+        uses: actions/download-artifact@v4
+        with:
+          path: allure-results
+          pattern: allure-results-*
+          merge-multiple: true
+      - name: Merge into JSON for the summary
+        run: npx playwright merge-reports --reporter json ./all-blob-reports > results.json
+      - name: Test summary
+        uses: daun/playwright-report-summary@v3
+        with:
+          report-file: results.json
+          job-summary: true
+      - name: Restore Allure history
         uses: actions/cache@v4
         with:
           path: history.jsonl
           key: allure-history-${{ github.run_id }}
           restore-keys: allure-history-
       - name: Generate Allure report
-        if: ${{ !cancelled() }}
         run: npx allure generate allure-results
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
         with:
           name: allure-report
           path: allure-report/
           retention-days: 30
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: test-results/
-          retention-days: 30
-      - name: Test summary
-        if: always()
-        uses: daun/playwright-report-summary@v3
-        with:
-          report-file: results.json
-          job-summary: true
+
   deploy-report:
-    needs: test
-    if: always()
+    needs: merge-reports
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       pages: write
