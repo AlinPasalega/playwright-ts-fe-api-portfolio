@@ -44,11 +44,14 @@ jobs:
         env:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+      - name: Generate Allure report
+        if: ${{ !cancelled() }}
+        run: npx allure generate allure-results
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: allure-report
+          path: allure-report/
           retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
@@ -75,10 +78,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: playwright-report
-          path: playwright-report
+          name: allure-report
+          path: allure-report
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: playwright-report
+          path: allure-report
       - id: deployment
         uses: actions/deploy-pages@v4

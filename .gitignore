@@ -9,3 +9,5 @@ node_modules/
 .env
 playwright/.auth/
 results.json
+allure-results/
+allure-report/
