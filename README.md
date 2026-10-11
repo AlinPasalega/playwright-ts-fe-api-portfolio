@@ -2,7 +2,7 @@
 
 [![Playwright Tests](https://github.com/AlinPasalega/playwright-ts-fe-api-portfolio/actions/workflows/playwright.yml/badge.svg)](https://github.com/AlinPasalega/playwright-ts-fe-api-portfolio/actions/workflows/playwright.yml)
 
-📊 **[Latest test report](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/)**, published automatically after every CI run.
+📊 **[Latest Allure report](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/)**, published automatically after every CI run.
 
 End-to-end test automation framework built with **Playwright** and **TypeScript**, covering UI flows on [Sauce Demo](https://www.saucedemo.com) and REST API tests on [Restful Booker](https://restful-booker.herokuapp.com).
 
@@ -20,7 +20,9 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 - Environment config with `dotenv`
 - ESLint + Prettier, enforced on every commit with Husky + lint-staged
 - GitHub Actions CI on Chromium, Firefox and WebKit, with nightly and on-demand runs
-- HTML report published to GitHub Pages; screenshots, videos and traces kept on failure
+- **Allure** report with run history, published to GitHub Pages
+- Test results summary on every GitHub Actions run
+- Screenshots, videos and traces kept on failure
 
 ## What's covered
 
@@ -36,6 +38,7 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 - Cart badge updates when products are added and removed
 - Product detail page shows the same name and price as the inventory list
 - Logout through the burger menu
+- Network mocking: the store still works when product images fail to load (`page.route()`)
 
 **UI: Cart & checkout**
 
@@ -86,6 +89,7 @@ tests/
     booking.spec.ts
     booking-negative.spec.ts
 playwright.config.ts
+allurerc.mjs                       # Allure config + history
 eslint.config.mjs
 .prettierrc
 .env.example
@@ -145,7 +149,7 @@ GitHub Actions runs the suite on Chromium, Firefox and WebKit plus the API proje
 - **Nightly** at 06:00 (Bucharest): full suite
 - **Manual run** (`workflow_dispatch`): choose smoke, regression or all from a dropdown
 
-After every run the HTML report is deployed to [GitHub Pages](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/) and also kept as a build artifact. Screenshots, videos and traces from failed tests are uploaded as artifacts. Credentials come from repository secrets `SAUCE_USERNAME` and `SAUCE_PASSWORD`.
+After every run an Allure report (with history across runs) is deployed to [GitHub Pages](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/) and also kept as a build artifact. Screenshots, videos and traces from failed tests are uploaded as artifacts. Credentials come from repository secrets `SAUCE_USERNAME` and `SAUCE_PASSWORD`.
 
 ## Roadmap
 
@@ -163,7 +167,9 @@ After every run the HTML report is deployed to [GitHub Pages](https://alinpasale
 - [x] Data-driven UI tests
 - [x] ESLint + Prettier + Husky pre-commit checks
 - [ ] Sharding and merged reports
-- [ ] Allure reporting
+- [x] Allure reporting with run history
+- [x] Network mocking (blocked images)
+- [x] Job summary on GitHub Actions
 
 ## Author
 
