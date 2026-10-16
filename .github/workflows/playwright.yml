@@ -101,7 +101,7 @@ jobs:
           job-summary: true
       - name: AI failure triage
         if: always()
-        run: npx tsx scripts/ai-failure-summary.ts
+        run: npx tsx scripts/ai-failure-summary.mts
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           XAI_MODEL: ${{ vars.XAI_MODEL }}

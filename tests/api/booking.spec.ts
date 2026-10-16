@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { BookingClient } from '../../api/BookingClient';
 import { BookingSchema, CreateBookingResponseSchema } from '../../api/schemas';
 import { createBookingData } from '../../api/testData';
+import { generateEdgeCaseBookings } from '../../utils/aiTestData';
 
 test.describe('API Booking', () => {
   test('full booking lifecycle', { tag: '@smoke' }, async ({ request }) => {
@@ -107,5 +108,34 @@ test.describe('API Booking', () => {
       const response = await client.deleteBooking(bookingid, token);
       expect(response.status()).toBe(201);
     });
+  });
+});
+
+test.describe('AI-generated edge cases', () => {
+  test.skip(!process.env.XAI_API_KEY, 'XAI_API_KEY not set');
+
+  test('creates and reads back AI-generated bookings', { tag: '@ai' }, async ({ request }) => {
+    const client = new BookingClient(request);
+    const token = await client.getToken();
+    const bookings = await generateEdgeCaseBookings(5);
+
+    for (const booking of bookings) {
+      await test.step(`${booking.firstname} ${booking.lastname}`.slice(0, 60), async () => {
+        const createResponse = await client.createBooking(booking);
+        expect(createResponse.status()).toBe(200);
+        const created = await createResponse.json();
+        expect(() => CreateBookingResponseSchema.parse(created)).not.toThrow();
+        expect(created.booking).toMatchObject(booking);
+
+        const getResponse = await client.getBooking(created.bookingid);
+        expect(getResponse.status()).toBe(200);
+        const fetched = await getResponse.json();
+        expect(() => BookingSchema.parse(fetched)).not.toThrow();
+        expect(fetched).toMatchObject(booking);
+
+        const deleteResponse = await client.deleteBooking(created.bookingid, token);
+        expect(deleteResponse.status()).toBe(201);
+      });
+    }
   });
 });
