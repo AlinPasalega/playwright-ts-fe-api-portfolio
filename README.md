@@ -16,10 +16,12 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 - Contract / schema validation with **Zod**
 - Generated test data with **Faker**
 - Data-driven (parametrized) tests
-- `@smoke` / `@regression` tags
+- `@smoke` / `@regression` / `@ai` tags
 - Environment config with `dotenv`
 - ESLint + Prettier, enforced on every commit with Husky + lint-staged
 - GitHub Actions CI on Chromium, Firefox and WebKit, with nightly and on-demand runs
+- **Sharded CI**: 2-shard parallel matrix with merged Playwright and Allure reports
+- **AI-assisted testing with the xAI Grok API**: automatic CI failure triage and AI-generated edge-case test data
 - **Allure** report with run history, published to GitHub Pages
 - Test results summary on every GitHub Actions run
 - Screenshots, videos and traces kept on failure
@@ -62,6 +64,11 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 - Negative cases: update and delete without a token return 403, a booking that doesn't exist returns 404
 - Every test creates its own Faker data and cleans up after itself
 
+**API: AI-generated edge cases (`@ai`)**
+
+- `creates and reads back AI-generated bookings`: Grok generates unusual but valid bookings, each one is created, read back, checked against the Zod schemas and deleted
+- Skips itself when `XAI_API_KEY` is not set
+
 ## Project structure
 
 ```
@@ -76,6 +83,10 @@ pages/                             # Page objects
   InventoryPage.ts
   CartPage.ts
   CheckoutPage.ts
+scripts/
+  ai-failure-summary.mts           # Grok triage of failed tests -> job summary
+utils/
+  aiTestData.ts                    # Grok edge-case booking generator + Zod validation
 tests/
   auth.setup.ts                    # Logs in once and saves the session
   fixtures.ts                      # loggedInPage fixture
@@ -86,7 +97,7 @@ tests/
     checkout-validation.spec.ts
   api/
     auth.spec.ts
-    booking.spec.ts
+    booking.spec.ts                # incl. @ai AI-generated edge cases
     booking-negative.spec.ts
 playwright.config.ts
 allurerc.mjs                       # Allure config + history
@@ -108,6 +119,7 @@ eslint.config.mjs
 - **Tags** split a fast smoke suite from the full regression suite.
 - **Stable locators** via `data-test` attributes (`testIdAttribute: 'data-test'`).
 - **No hardcoded credentials**: values come from `.env` locally and GitHub secrets in CI.
+- **AI output is never trusted blindly**: everything Grok generates is parsed with Zod before a test uses it, and the AI triage step can never fail the build.
 - **Code quality gate**: ESLint and Prettier run automatically on staged files before every commit.
 
 ## Getting started
@@ -135,6 +147,7 @@ npx playwright test --project=chromium   # one browser
 npx playwright test --project=api        # API tests only
 npx playwright test --grep "@smoke"      # smoke suite
 npx playwright test --grep "@regression" # regression suite
+npx playwright test --grep "@ai"         # AI-generated edge cases (needs XAI_API_KEY)
 npx playwright test --ui                 # interactive UI mode
 npx playwright show-report               # open the HTML report
 npm run lint                             # ESLint
@@ -151,6 +164,42 @@ GitHub Actions runs the suite on Chromium, Firefox and WebKit plus the API proje
 
 After every run an Allure report (with history across runs) is deployed to [GitHub Pages](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/) and also kept as a build artifact. Screenshots, videos and traces from failed tests are uploaded as artifacts. Credentials come from repository secrets `SAUCE_USERNAME` and `SAUCE_PASSWORD`.
 
+### Sharding and merged reports
+
+- Tests run in a **2-shard matrix** (`--shard=1/2`, `--shard=2/2`) in parallel.
+- Each shard uploads a **blob report** and its **Allure results** as artifacts.
+- A `merge-reports` job downloads them, combines the blob reports with `npx playwright merge-reports` into one HTML report, merges the Allure results, and deploys the Allure report (with history) to GitHub Pages.
+
+## AI-assisted testing (xAI Grok)
+
+### CI failure triage
+
+`scripts/ai-failure-summary.mts` runs in the `merge-reports` job:
+
+1. Reads the merged `results.json` and collects the failed tests and their errors.
+2. Sends them to the xAI Grok API (`https://api.x.ai/v1/chat/completions`). The model comes from the `XAI_MODEL` repository variable and the key from the `XAI_API_KEY` secret.
+3. Writes a triage section to the GitHub job summary: for each failure, the likely cause (**product bug**, **test bug**, **flaky** or **environment**) and a suggested fix.
+
+The step **never fails the build**: if there are no failures, no key, or the API call fails, it just notes that in the summary.
+
+### AI-generated edge-case test data
+
+`utils/aiTestData.ts` exports `generateEdgeCaseBookings()`, which asks Grok for unusual but valid booking payloads: unicode, emoji and CJK names, very long strings, apostrophes and hyphens, price `0`, leap-day dates. The response is **validated with Zod before any test uses it**, so bad AI output fails loudly instead of producing junk data.
+
+The test `creates and reads back AI-generated bookings` (tag `@ai`, in `tests/api/booking.spec.ts`) creates, reads back and deletes each booking. It skips itself when `XAI_API_KEY` is not set, so the rest of the suite runs without a key.
+
+Run it locally (PowerShell):
+
+```powershell
+$env:XAI_API_KEY="..."; $env:XAI_MODEL="grok-4.3"; npx playwright test --grep "@ai"
+```
+
+Never commit the key: use an environment variable locally and the `XAI_API_KEY` secret in CI.
+
+## Built with AI assistance
+
+This framework was developed with **Claude Code** as my daily AI pair programmer for scaffolding, refactoring and debugging tests. I review every change it makes.
+
 ## Roadmap
 
 - [x] UI tests for login, inventory, cart and checkout
@@ -166,10 +215,12 @@ After every run an Allure report (with history across runs) is deployed to [GitH
 - [x] Generated test data with Faker
 - [x] Data-driven UI tests
 - [x] ESLint + Prettier + Husky pre-commit checks
-- [x] Sharding and merged reports
+- [x] Sharding (2 shards) and merged reports
 - [x] Allure reporting with run history
 - [x] Network mocking (blocked images)
 - [x] Job summary on GitHub Actions
+- [x] AI failure triage in the job summary (xAI Grok)
+- [x] AI-generated edge-case test data validated with Zod
 
 ## Author
 
