@@ -17,7 +17,7 @@ test.describe('cart checkout', () => {
 
   test('add item to cart and check badge', { tag: '@smoke' }, async () => {
     await inventoryPage.addToCart('sauce-labs-backpack');
-    await expect(inventoryPage.shoppingCartBadge).toHaveText('1');
+    await expect(inventoryPage.shoppingCartBadge).toHaveText('2');
   });
 
   test('add multiple items to cart and check badge', { tag: '@smoke' }, async () => {

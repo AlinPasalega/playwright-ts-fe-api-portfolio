@@ -99,6 +99,12 @@ jobs:
         with:
           report-file: results.json
           job-summary: true
+      - name: AI failure triage
+        if: always()
+        run: npx tsx scripts/ai-failure-summary.ts
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: ${{ vars.XAI_MODEL }}
       - name: Restore Allure history
         uses: actions/cache@v4
         with:
