@@ -6,6 +6,13 @@
 
 End-to-end test automation framework built with **Playwright** and **TypeScript**, covering UI flows on [Sauce Demo](https://www.saucedemo.com) and REST API tests on [Restful Booker](https://restful-booker.herokuapp.com).
 
+## Highlights
+
+- 🤖 **AI CI failure triage (xAI Grok API)**: when tests fail in CI, Grok classifies each failure (product bug, test bug, flaky or environment) and suggests a fix, right in the GitHub job summary. It never fails the build.
+- 🧪 **AI-generated edge-case test data**: Grok generates unusual but valid bookings (unicode/emoji names, long strings, price `0`, leap-day dates), validated with **Zod** before any test uses them, and exercised by the `@ai` API test.
+- 🛠️ **Built with Grok Bot AI assistants**: developed in a pair-programming and coaching workflow with Grok Bot for scaffolding, debugging flaky tests and CI setup.
+- ⚡ **Sharded CI** on Chromium, Firefox, WebKit and API, with merged reports and a live **Allure** report with history.
+
 ## Tech stack
 
 - Playwright Test + TypeScript
@@ -196,9 +203,9 @@ $env:XAI_API_KEY="..."; $env:XAI_MODEL="grok-4.3"; npx playwright test --grep "@
 
 Never commit the key: use an environment variable locally and the `XAI_API_KEY` secret in CI.
 
-## Built with AI assistance
+## Built with Grok Bot
 
-This framework was developed with **Claude Code** as my daily AI pair programmer for scaffolding, refactoring and debugging tests. I review every change it makes.
+This framework was built with **Grok Bot** AI assistants in a pair-programming and coaching workflow: scaffolding the framework, debugging flaky tests and setting up the sharded CI pipeline. I review every change before it goes in.
 
 ## Roadmap
 
