@@ -1,18 +1,14 @@
-import { test, expect } from '@playwright/test';
-import { BookingClient } from '../../api/BookingClient';
 import { BookingSchema, CreateBookingResponseSchema } from '../../api/schemas';
 import { createBookingData } from '../../api/testData';
 import { generateEdgeCaseBookings } from '../../utils/aiTestData';
+import { test, expect } from '../bookingFixtures';
 
 test.describe('API Booking', () => {
-  test('full booking lifecycle', { tag: '@smoke' }, async ({ request }) => {
-    const client = new BookingClient(request);
-    let token: string;
+  test('full booking lifecycle', { tag: '@smoke' }, async ({ client, token, trackBooking }) => {
     let bookingId: number;
     const bookingData = createBookingData();
 
     await test.step('Authenticate', async () => {
-      token = await client.getToken();
       expect(token).toBeTruthy();
     });
 
@@ -22,6 +18,7 @@ test.describe('API Booking', () => {
       const body = await response.json();
       expect(() => CreateBookingResponseSchema.parse(body)).not.toThrow();
       bookingId = body.bookingid;
+      trackBooking(bookingId);
       expect(body.booking).toMatchObject(bookingData);
     });
 
@@ -56,86 +53,82 @@ test.describe('API Booking', () => {
     });
   });
 
-  test('partially updates a booking', { tag: '@regression' }, async ({ request }) => {
-    const client = new BookingClient(request);
-    const bookingData = createBookingData();
-    const token = await client.getToken();
+  test(
+    'partially updates a booking',
+    { tag: '@regression' },
+    async ({ client, token, trackBooking }) => {
+      const bookingData = createBookingData();
 
-    const createResponse = await client.createBooking(bookingData);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = await createResponse.json();
+      const createResponse = await client.createBooking(bookingData);
+      expect(createResponse.status()).toBe(200);
+      const { bookingid } = await createResponse.json();
+      trackBooking(bookingid);
 
-    await test.step('Patch firstname and totalprice', async () => {
-      const response = await client.partialUpdateBooking(
-        bookingid,
-        { firstname: 'Patched', totalprice: 999 },
-        token,
-      );
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(() => BookingSchema.parse(body)).not.toThrow();
-      expect(body.firstname).toBe('Patched');
-      expect(body.totalprice).toBe(999);
-      expect(body.lastname).toBe(bookingData.lastname);
-    });
-
-    await test.step('Clean up', async () => {
-      const response = await client.deleteBooking(bookingid, token);
-      expect(response.status()).toBe(201);
-    });
-  });
-
-  test('Filter by firstname and lastname', { tag: '@regression' }, async ({ request }) => {
-    const client = new BookingClient(request);
-    const bookingData = createBookingData();
-    const token = await client.getToken();
-
-    const createResponse = await client.createBooking(bookingData);
-    expect(createResponse.status()).toBe(200);
-    const { bookingid } = await createResponse.json();
-
-    await test.step('Filter by firstname', async () => {
-      const response = await client.getBookingIds({
-        firstname: bookingData.firstname,
-        lastname: bookingData.lastname,
+      await test.step('Patch firstname and totalprice', async () => {
+        const response = await client.partialUpdateBooking(
+          bookingid,
+          { firstname: 'Patched', totalprice: 999 },
+          token,
+        );
+        expect(response.status()).toBe(200);
+        const body = await response.json();
+        expect(() => BookingSchema.parse(body)).not.toThrow();
+        expect(body.firstname).toBe('Patched');
+        expect(body.totalprice).toBe(999);
+        expect(body.lastname).toBe(bookingData.lastname);
       });
-      expect(response.status()).toBe(200);
-      const body = await response.json();
-      expect(body).toEqual(expect.arrayContaining([expect.objectContaining({ bookingid })]));
-    });
+    },
+  );
 
-    await test.step('Clean up', async () => {
-      const response = await client.deleteBooking(bookingid, token);
-      expect(response.status()).toBe(201);
-    });
-  });
+  test(
+    'Filter by firstname and lastname',
+    { tag: '@regression' },
+    async ({ client, trackBooking }) => {
+      const bookingData = createBookingData();
+
+      const createResponse = await client.createBooking(bookingData);
+      expect(createResponse.status()).toBe(200);
+      const { bookingid } = await createResponse.json();
+      trackBooking(bookingid);
+
+      await test.step('Filter by firstname', async () => {
+        const response = await client.getBookingIds({
+          firstname: bookingData.firstname,
+          lastname: bookingData.lastname,
+        });
+        expect(response.status()).toBe(200);
+        const body = await response.json();
+        expect(body).toEqual(expect.arrayContaining([expect.objectContaining({ bookingid })]));
+      });
+    },
+  );
 });
 
 test.describe('AI-generated edge cases', () => {
   test.skip(!process.env.XAI_API_KEY, 'XAI_API_KEY not set');
 
-  test('creates and reads back AI-generated bookings', { tag: '@ai' }, async ({ request }) => {
-    const client = new BookingClient(request);
-    const token = await client.getToken();
-    const bookings = await generateEdgeCaseBookings(5);
+  test(
+    'creates and reads back AI-generated bookings',
+    { tag: '@ai' },
+    async ({ client, trackBooking }) => {
+      const bookings = await generateEdgeCaseBookings(5);
 
-    for (const booking of bookings) {
-      await test.step(`${booking.firstname} ${booking.lastname}`.slice(0, 60), async () => {
-        const createResponse = await client.createBooking(booking);
-        expect(createResponse.status()).toBe(200);
-        const created = await createResponse.json();
-        expect(() => CreateBookingResponseSchema.parse(created)).not.toThrow();
-        expect(created.booking).toMatchObject(booking);
+      for (const booking of bookings) {
+        await test.step(`${booking.firstname} ${booking.lastname}`.slice(0, 60), async () => {
+          const createResponse = await client.createBooking(booking);
+          expect(createResponse.status()).toBe(200);
+          const created = await createResponse.json();
+          trackBooking(created.bookingid);
+          expect(() => CreateBookingResponseSchema.parse(created)).not.toThrow();
+          expect(created.booking).toMatchObject(booking);
 
-        const getResponse = await client.getBooking(created.bookingid);
-        expect(getResponse.status()).toBe(200);
-        const fetched = await getResponse.json();
-        expect(() => BookingSchema.parse(fetched)).not.toThrow();
-        expect(fetched).toMatchObject(booking);
-
-        const deleteResponse = await client.deleteBooking(created.bookingid, token);
-        expect(deleteResponse.status()).toBe(201);
-      });
-    }
-  });
+          const getResponse = await client.getBooking(created.bookingid);
+          expect(getResponse.status()).toBe(200);
+          const fetched = await getResponse.json();
+          expect(() => BookingSchema.parse(fetched)).not.toThrow();
+          expect(fetched).toMatchObject(booking);
+        });
+      }
+    },
+  );
 });
