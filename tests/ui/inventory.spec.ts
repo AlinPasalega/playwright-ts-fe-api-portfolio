@@ -59,8 +59,18 @@ test.describe('Inventory Page', () => {
   test('log out flow', { tag: '@regression' }, async ({ loggedInPage }) => {
     const inventory = new InventoryPage(loggedInPage);
     await inventory.openBurgerMenuLogout();
+    // 1. Landed on the login page
     await expect(loggedInPage).toHaveURL('https://www.saucedemo.com/');
     await expect(loggedInPage.getByTestId('login-button')).toBeVisible();
+    // 2. Session cookie is gone
+    const cookies = await loggedInPage.context().cookies();
+    expect(cookies.find((c) => c.name === 'session-username')).toBeUndefined();
+    // 3. A protected page is blocked after logout
+    await loggedInPage.goto('https://www.saucedemo.com/inventory.html');
+    await expect(loggedInPage).toHaveURL('https://www.saucedemo.com/');
+    await expect(loggedInPage.getByTestId('error')).toContainText(
+      "You can only access '/inventory.html' when you are logged in",
+    );
   });
 
   test(
