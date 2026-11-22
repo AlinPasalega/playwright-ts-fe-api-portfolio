@@ -24,8 +24,8 @@ jobs:
         shardIndex: [1, 2]
         shardTotal: [2]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
       - name: Install dependencies
@@ -52,19 +52,19 @@ jobs:
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           XAI_MODEL: ${{ vars.XAI_MODEL }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: blob-report-${{ matrix.shardIndex }}
           path: blob-report/
           retention-days: 1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: allure-results-${{ matrix.shardIndex }}
           path: allure-results/
           retention-days: 1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-${{ matrix.shardIndex }}
@@ -76,20 +76,20 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
       - name: Install dependencies
         run: npm ci
       - name: Download blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: all-blob-reports
           pattern: blob-report-*
           merge-multiple: true
       - name: Download Allure results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: allure-results
           pattern: allure-results-*
@@ -97,10 +97,11 @@ jobs:
       - name: Merge into JSON for the summary
         run: npx playwright merge-reports --reporter json ./all-blob-reports > results.json
       - name: Test summary
-        uses: daun/playwright-report-summary@v3
+        uses: daun/playwright-report-summary@v4
         with:
           report-file: results.json
           job-summary: true
+          create-comment: false
       - name: AI failure triage
         if: always()
         run: npx tsx scripts/ai-failure-summary.mts
@@ -108,14 +109,14 @@ jobs:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           XAI_MODEL: ${{ vars.XAI_MODEL }}
       - name: Restore Allure history
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: history.jsonl
           key: allure-history-${{ github.run_id }}
           restore-keys: allure-history-
       - name: Generate Allure report
         run: npx allure generate allure-results
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: allure-report
           path: allure-report/
@@ -132,12 +133,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: allure-report
           path: allure-report
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: allure-report
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
