@@ -124,7 +124,7 @@ jobs:
 
   deploy-report:
     needs: merge-reports
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       pages: write
