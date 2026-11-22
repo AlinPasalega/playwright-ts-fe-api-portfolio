@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class InventoryPage {
   readonly page: Page;
@@ -39,7 +39,9 @@ export class InventoryPage {
   }
   async openBurgerMenuLogout() {
     await this.burgerMenuButton.click();
-    await this.logoutButton.dispatchEvent('click');
+    await expect(this.page.locator('.bm-menu-wrap')).toHaveAttribute('aria-hidden', 'false');
+    await expect(this.logoutButton).toBeVisible();
+    await this.logoutButton.click();
   }
 
   async getProductPrices() {

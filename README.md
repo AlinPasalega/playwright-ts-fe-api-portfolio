@@ -1,37 +1,31 @@
 # Playwright + TypeScript — UI & API Test Automation Portfolio
 
 [![Playwright Tests](https://github.com/AlinPasalega/playwright-ts-fe-api-portfolio/actions/workflows/playwright.yml/badge.svg)](https://github.com/AlinPasalega/playwright-ts-fe-api-portfolio/actions/workflows/playwright.yml)
+[![Allure report](https://img.shields.io/badge/Allure-live%20report-orange)](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/)
 
-📊 **[Latest Allure report](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/)**, published automatically after every CI run.
+Playwright · TypeScript · Zod · Allure · GitHub Actions
 
 End-to-end test automation framework built with **Playwright** and **TypeScript**, covering UI flows on [Sauce Demo](https://www.saucedemo.com) and REST API tests on [Restful Booker](https://restful-booker.herokuapp.com).
 
+📊 **[Latest Allure report](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/)**, published automatically after every CI run.
+
 ## Highlights
 
-- 🤖 **AI CI failure triage (xAI Grok API)**: when tests fail in CI, Grok classifies each failure (product bug, test bug, flaky or environment) and suggests a fix, right in the GitHub job summary. It never fails the build.
-- 🧪 **AI-generated edge-case test data**: Grok generates unusual but valid bookings (unicode/emoji names, long strings, price `0`, leap-day dates), validated with **Zod** before any test uses them, and exercised by the `@ai` API test.
+- 🤖 **AI CI failure triage (xAI Grok API)**: when tests fail in CI, Grok classifies each failure (product bug, test bug, flaky or environment) and suggests a fix, right in the GitHub job summary. The triage step never fails the build.
+- 🧪 **AI-generated edge-case test data**: Grok generates unusual but valid bookings (unicode/emoji names, long strings, price `0`, leap-day dates), validated with **Zod** (and extra value checks) before any test uses them, and exercised by the `@ai` API test on nightly CI.
 - 🛠️ **Built with Grok Bot AI assistants**: developed in a pair-programming and coaching workflow with Grok Bot for scaffolding, debugging flaky tests and CI setup.
-- ⚡ **Sharded CI** on Chromium, Firefox, WebKit and API, with merged reports and a live **Allure** report with history.
+- ⚡ **Sharded CI** on Chromium, Firefox, WebKit and API, with a merged job summary and a live **Allure** report with history.
 
 ## Tech stack
 
 - Playwright Test + TypeScript
-- Page Object Model
-- Custom fixtures (`test.extend`)
-- Authenticated sessions with `storageState` (setup project)
-- API client class wrapping Playwright's `request` fixture
-- Contract / schema validation with **Zod**
-- Generated test data with **Faker**
-- Data-driven (parametrized) tests
-- `@smoke` / `@regression` / `@ai` tags
-- Environment config with `dotenv`
-- ESLint + Prettier, enforced on every commit with Husky + lint-staged
-- GitHub Actions CI on Chromium, Firefox and WebKit, with nightly and on-demand runs
-- **Sharded CI**: 2-shard parallel matrix with merged Playwright and Allure reports
-- **AI-assisted testing with the xAI Grok API**: automatic CI failure triage and AI-generated edge-case test data
-- **Allure** report with run history, published to GitHub Pages
-- Test results summary on every GitHub Actions run
-- Screenshots, videos and traces kept on failure
+- Page Object Model and custom fixtures (`test.extend`)
+- Authenticated sessions with `storageState`
+- API client over Playwright's `request` fixture
+- Zod schema validation and Faker test data
+- Data-driven tests with `@smoke` / `@regression` / `@ai` tags
+- ESLint, Prettier, Husky and lint-staged
+- GitHub Actions (sharded, nightly and on-demand) with Allure on GitHub Pages
 
 ## What's covered
 
@@ -74,7 +68,7 @@ End-to-end test automation framework built with **Playwright** and **TypeScript*
 **API: AI-generated edge cases (`@ai`)**
 
 - `creates and reads back AI-generated bookings`: Grok generates unusual but valid bookings, each one is created, read back, checked against the Zod schemas and deleted
-- Skips itself when `XAI_API_KEY` is not set
+- Skips itself when `XAI_API_KEY` is not set; runs in the nightly CI suite when the key is present
 
 ## Project structure
 
@@ -97,6 +91,7 @@ utils/
 tests/
   auth.setup.ts                    # Logs in once and saves the session
   fixtures.ts                      # loggedInPage fixture
+  bookingFixtures.ts               # API client, token and booking cleanup
   ui/
     login.spec.ts
     inventory.spec.ts
@@ -107,6 +102,7 @@ tests/
     booking.spec.ts                # incl. @ai AI-generated edge cases
     booking-negative.spec.ts
 playwright.config.ts
+tsconfig.json
 allurerc.mjs                       # Allure config + history
 eslint.config.mjs
 .prettierrc
@@ -119,9 +115,9 @@ eslint.config.mjs
 - **Login once per run**: a setup project authenticates and saves the session with `storageState`; inventory, cart and checkout tests reuse it. Login tests clear the state so they still exercise the real login form.
 - **Separate API project** with its own `baseURL`, no browser and no session, so API tests run once and fast.
 - **Data-driven tests** loop over case tables (sort options, checkout errors), so adding a case is one line.
-- **Schema validation with Zod** catches contract changes (missing fields, wrong types), not just wrong values.
+- **Schema validation with Zod** catches contract changes (missing fields, wrong types and invalid dates), not just wrong values.
 - **Fresh Faker data per test** keeps tests independent on a shared public API; each test deletes what it created.
-- **Web-first assertions instead of fixed waits**: locators are returned from page objects and checked with auto-retrying `expect`. Flaky WebKit behaviour on the burger menu was fixed by waiting for the menu's real open state (`aria-hidden="false"`), not by adding timeouts.
+- **Web-first assertions instead of fixed waits**: locators are returned from page objects and checked with auto-retrying `expect`. Flaky WebKit behaviour on the burger menu was fixed by waiting for the menu's real open state (`aria-hidden="false"`) and then clicking the logout link, not by adding timeouts or bypassing actionability checks.
 - **Readable reports** with `test.step`, so each phase of a flow shows up separately.
 - **Tags** split a fast smoke suite from the full regression suite.
 - **Stable locators** via `data-test` attributes (`testIdAttribute: 'data-test'`).
@@ -144,21 +140,23 @@ cp .env.example .env   # then fill in the values
 ```
 SAUCE_USERNAME=standard_user
 SAUCE_PASSWORD=secret_sauce
+XAI_API_KEY=           # optional, needed for the @ai tests
+XAI_MODEL=grok-4.3
 ```
 
 ## Running tests
 
 ```bash
-npx playwright test                      # everything
+npm test                             # everything
 npx playwright test --project=chromium   # one browser
-npx playwright test --project=api        # API tests only
-npx playwright test --grep "@smoke"      # smoke suite
+npm run test:api                     # API tests only
+npm run test:smoke                   # smoke suite
 npx playwright test --grep "@regression" # regression suite
-npx playwright test --grep "@ai"         # AI-generated edge cases (needs XAI_API_KEY)
-npx playwright test --ui                 # interactive UI mode
-npx playwright show-report               # open the HTML report
-npm run lint                             # ESLint
-npm run format                           # Prettier
+npx playwright test --grep "@ai"     # AI-generated edge cases (needs XAI_API_KEY)
+npx playwright test --ui             # interactive UI mode
+npx playwright show-report           # open the HTML report
+npm run lint                         # ESLint
+npm run format                       # Prettier
 ```
 
 ## CI
@@ -166,7 +164,7 @@ npm run format                           # Prettier
 GitHub Actions runs the suite on Chromium, Firefox and WebKit plus the API project:
 
 - **Push / pull request** to `main`: smoke suite
-- **Nightly** at 06:00 (Bucharest): full suite
+- **Nightly** at 06:00 (Bucharest): full suite, including `@ai` when `XAI_API_KEY` is set
 - **Manual run** (`workflow_dispatch`): choose smoke, regression or all from a dropdown
 
 After every run an Allure report (with history across runs) is deployed to [GitHub Pages](https://alinpasalega.github.io/playwright-ts-fe-api-portfolio/) and also kept as a build artifact. Screenshots, videos and traces from failed tests are uploaded as artifacts. Credentials come from repository secrets `SAUCE_USERNAME` and `SAUCE_PASSWORD`.
@@ -175,7 +173,7 @@ After every run an Allure report (with history across runs) is deployed to [GitH
 
 - Tests run in a **2-shard matrix** (`--shard=1/2`, `--shard=2/2`) in parallel.
 - Each shard uploads a **blob report** and its **Allure results** as artifacts.
-- A `merge-reports` job downloads them, combines the blob reports with `npx playwright merge-reports` into one HTML report, merges the Allure results, and deploys the Allure report (with history) to GitHub Pages.
+- A `merge-reports` job downloads them, merges the blob reports with `npx playwright merge-reports` into a JSON file for the job summary, merges the Allure results, and deploys the Allure report (with history) to GitHub Pages.
 
 ## AI-assisted testing (xAI Grok)
 
@@ -184,16 +182,16 @@ After every run an Allure report (with history across runs) is deployed to [GitH
 `scripts/ai-failure-summary.mts` runs in the `merge-reports` job:
 
 1. Reads the merged `results.json` and collects the failed tests and their errors.
-2. Sends them to the xAI Grok API (`https://api.x.ai/v1/chat/completions`). The model comes from the `XAI_MODEL` repository variable and the key from the `XAI_API_KEY` secret.
+2. Sends them to the xAI Grok API (`https://api.x.ai/v1/chat/completions`). The model comes from the `XAI_MODEL` repository variable (falling back to `grok-4.3`) and the key from the `XAI_API_KEY` secret.
 3. Writes a triage section to the GitHub job summary: for each failure, the likely cause (**product bug**, **test bug**, **flaky** or **environment**) and a suggested fix.
 
-The step **never fails the build**: if there are no failures, no key, or the API call fails, it just notes that in the summary.
+The step **never fails the build**: if there are no failures, no key, no results file, or the API call throws, it just notes that in the summary and exits 0.
 
 ### AI-generated edge-case test data
 
 `utils/aiTestData.ts` exports `generateEdgeCaseBookings()`, which asks Grok for unusual but valid booking payloads: unicode, emoji and CJK names, very long strings, apostrophes and hyphens, price `0`, leap-day dates. The response is **validated with Zod before any test uses it**, so bad AI output fails loudly instead of producing junk data.
 
-The test `creates and reads back AI-generated bookings` (tag `@ai`, in `tests/api/booking.spec.ts`) creates, reads back and deletes each booking. It skips itself when `XAI_API_KEY` is not set, so the rest of the suite runs without a key.
+The test `creates and reads back AI-generated bookings` (tag `@ai`, in `tests/api/booking.spec.ts`) creates, reads back and deletes each booking. It skips itself when `XAI_API_KEY` is not set, so the rest of the suite runs without a key. In CI, the key is passed into the test job so the nightly (and manual "all") runs can execute this test.
 
 Run it locally (PowerShell):
 
@@ -207,27 +205,10 @@ Never commit the key: use an environment variable locally and the `XAI_API_KEY` 
 
 This framework was built with **Grok Bot** AI assistants in a pair-programming and coaching workflow: scaffolding the framework, debugging flaky tests and setting up the sharded CI pipeline. I review every change before it goes in.
 
-## Roadmap
+## What's next
 
-- [x] UI tests for login, inventory, cart and checkout
-- [x] Page Object Model and fixtures
-- [x] Session reuse with `storageState`
-- [x] CI on three browsers
-- [x] API tests for Restful Booker (auth, CRUD, PATCH, filtering, negative cases)
-- [x] `@smoke` / `@regression` tags
-- [x] Nightly and manual CI runs
-- [x] HTML report published to GitHub Pages
-- [x] Screenshots, videos and traces kept on failure
-- [x] API client class and Zod schema validation
-- [x] Generated test data with Faker
-- [x] Data-driven UI tests
-- [x] ESLint + Prettier + Husky pre-commit checks
-- [x] Sharding (2 shards) and merged reports
-- [x] Allure reporting with run history
-- [x] Network mocking (blocked images)
-- [x] Job summary on GitHub Actions
-- [x] AI failure triage in the job summary (xAI Grok)
-- [x] AI-generated edge-case test data validated with Zod
+- Keep demo credentials in environment variables only (login tests and the Restful Booker client still use the public demo values in a few places)
+- Add a LICENSE file to match the package license
 
 ## Author
 

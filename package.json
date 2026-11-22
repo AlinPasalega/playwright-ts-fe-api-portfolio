@@ -1,9 +1,12 @@
 {
   "name": "playwright-ts-fe-api-portfolio",
   "version": "1.0.0",
-  "description": "",
+  "description": "Playwright + TypeScript UI and API test framework for Sauce Demo and Restful Booker, with Zod contracts, sharded GitHub Actions, and a live Allure report.",
   "main": "index.js",
   "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:api": "playwright test --project=api",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -15,8 +18,17 @@
       "eslint --fix"
     ]
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "playwright",
+    "typescript",
+    "test-automation",
+    "qa-automation",
+    "api-testing",
+    "end-to-end-testing",
+    "allure",
+    "github-actions"
+  ],
+  "author": "Alin Pasalega",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
@@ -34,6 +46,7 @@
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
     "zod": "^4.6.5"
   }
