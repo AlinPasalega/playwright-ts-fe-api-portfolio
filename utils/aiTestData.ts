@@ -57,7 +57,7 @@ export async function generateEdgeCaseBookings(count = 5): Promise<AiBooking[]> 
       Authorization: `Bearer ${process.env.XAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: process.env.XAI_MODEL,
+      model: process.env.XAI_MODEL || 'grok-4.3',
       temperature: 0.7,
       messages: [
         {
